@@ -19,19 +19,35 @@ set(DESKTOP_SDK_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../desktop-sdk")
 
 include(${CORE_ROOT_DIR}/common.cmake)
 
-message( "Fetch and build icu (DESKTOPEDITOR VERSION 60)" )
+message( "Fetch and build icu (DESKTOPEDITOR VERSION 74)" )
 set(ICU_3RDPARTY_DIR "${CORE_ROOT_DIR}/Common/3dParty/icu")
-set(ICU_INSTALL_DIR "${EO_CORE_3RD_PARTY_INSTALL_DIR}/icu60")
-set(ICU_MAJOR_VER "60")
-set(ICU_MINOR_VER "3")
+set(ICU_INSTALL_DIR "${EO_CORE_3RD_PARTY_INSTALL_DIR}/icu")
+set(ICU_MAJOR_VER "74")
+set(ICU_MINOR_VER "2")
 get_filename_component(ICU_3RDPARTY_DIR_ABS "${ICU_3RDPARTY_DIR}" ABSOLUTE)
 get_filename_component(ICU_INSTALL_DIR_ABS "${ICU_INSTALL_DIR}" ABSOLUTE)
 execute_process(
     COMMAND_ECHO STDOUT
-    COMMAND ./nc-build.sh "${EO_CORE_3RD_PARTY_WORK_DIR}/icu60" "${ICU_INSTALL_DIR}" ${ICU_MAJOR_VER} ${ICU_MINOR_VER}
+    COMMAND ./nc-build.sh "${EO_CORE_3RD_PARTY_WORK_DIR}/icu" "${ICU_INSTALL_DIR}" ${ICU_MAJOR_VER} ${ICU_MINOR_VER}
     WORKING_DIRECTORY ${ICU_3RDPARTY_DIR_ABS}
 )
 
+
+# 2. Find Qt Packages
+set(QT_ROOT "/qt6/6.11.1/gcc_64")
+set(QT_DIR "${QT_ROOT}/lib/cmake/Qt6")
+set(Qt6_DIR "${QT_ROOT}/lib/cmake/Qt6")
+find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core Gui Widgets PrintSupport Svg)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Widgets PrintSupport Svg LinguistTools Multimedia MultimediaWidgets)
+
+if(UNIX)
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS DBus)
+    add_definitions(-DLINUX -D_LINUX -D_WAYLAND -DQT_VERSION_6)
+endif()
+
+set(CEF_ROOT "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/cef")
+list(APPEND CMAKE_MODULE_PATH "${CEF_ROOT}/cmake")
+find_package(CEF REQUIRED)
 
 if(NOT TARGET hunspell-wrapper)
     add_subdirectory(${CORE_ROOT_DIR}/Common/3dParty/hunspell/qt hunspell-wrapper)
@@ -131,22 +147,6 @@ execute_process(
     COMMAND ./nc-build.sh "${EO_CORE_3RD_PARTY_WORK_DIR}/openssl" "${OPENSSL_INSTALL_DIR}"
     WORKING_DIRECTORY ${OPENSSL_3RDPARTY_DIR_ABS}
 )
-
-# 2. Find Qt Packages
-set(QT_ROOT "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/qt/Qt-5.9.9/gcc_64/")
-set(QT_DIR "${QT_ROOT}/lib/cmake/Qt5")
-set(Qt5_DIR "${QT_ROOT}/lib/cmake/Qt5")
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Gui Widgets PrintSupport Svg)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Widgets PrintSupport Svg LinguistTools Multimedia MultimediaWidgets)
-
-if(UNIX)
-    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS DBus X11Extras)
-    add_definitions(-DLINUX -D_LINUX -D_X11)
-endif()
-
-set(CEF_ROOT "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/cef")
-list(APPEND CMAKE_MODULE_PATH "${CEF_ROOT}/cmake")
-find_package(CEF REQUIRED)
 
 # 3. Definitions & Global Config
 add_definitions(-D__DONT_WRITE_IN_APP_TITLE)
@@ -299,7 +299,7 @@ elseif(UNIX AND NOT APPLE)
     # Linux Resource Compiler (GResource)
 
     list(APPEND COMMON_SOURCES 
-        src/windows/platform_linux/cx11decoration.cpp
+        src/windows/platform_linux/cplatformdecoration.cpp
         src/windows/platform_linux/cwindowplatform.cpp
         src/components/cnotification.cpp
         src/platform_linux/cdialogopenssl.cpp
@@ -309,11 +309,11 @@ elseif(UNIX AND NOT APPLE)
         src/platform_linux/gtkfilechooser.cpp
         src/platform_linux/gtkprintdialog.cpp
         src/platform_linux/gtkutils.cpp
-        src/platform_linux/xcbutils.cpp
+        src/platform_linux/linux_window_utils.cpp
         extras/update-daemon/src/classes/csocket.cpp
     )
     list(APPEND COMMON_HEADERS 
-        src/windows/platform_linux/cx11decoration.h
+        src/windows/platform_linux/cplatformdecoration.h
         #src/windows/platform_linux/gtk_addon.h
         src/windows/platform_linux/cwindowplatform.h
         src/components/cnotification.h
@@ -324,7 +324,7 @@ elseif(UNIX AND NOT APPLE)
         src/platform_linux/gtkfilechooser.h
         src/platform_linux/gtkprintdialog.h
         src/platform_linux/gtkutils.h
-        src/platform_linux/xcbutils.h
+        src/platform_linux/linux_window_utils.h
         extras/update-daemon/src/classes/csocket.h
     )
 
@@ -345,9 +345,9 @@ elseif(UNIX AND NOT APPLE)
 endif()
 
 # 7. Create Executable
-qt5_add_resources(RESOURCES resources.qrc)
+qt6_add_resources(RESOURCES resources.qrc)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extras.qrc")
-    qt5_add_resources(RESOURCES extras.qrc)
+    qt6_add_resources(RESOURCES extras.qrc)
 endif()
 
 add_executable(DesktopEditors ${COMMON_SOURCES} ${COMMON_HEADERS} ${RESOURCES})
@@ -425,7 +425,6 @@ endif()
 if(UNIX)
     target_link_libraries(DesktopEditors PRIVATE
         Qt${QT_VERSION_MAJOR}::DBus
-        Qt${QT_VERSION_MAJOR}::X11Extras
         ${ICU_INSTALL_DIR_ABS}/lib/libicuuc.so.${ICU_MAJOR_VER}
         ${ICU_INSTALL_DIR_ABS}/lib/libicudata.so.${ICU_MAJOR_VER}
         ${ICU_INSTALL_DIR_ABS}/lib/libicui18n.so.${ICU_MAJOR_VER}
@@ -436,7 +435,7 @@ endif()
 
 # 10. Translations
 file(GLOB TS_FILES "langs/*.ts")
-qt5_create_translation(DesktopEditors TS_FILES ${TS_FILES})
+qt6_add_translation(DesktopEditors TS_FILES ${TS_FILES})
 
 # 1. Explicitly set CEF Path
 set(CEF_LIB_PATH "${CEF_ROOT}/Release")

@@ -149,18 +149,18 @@ public:
     static void unbindReceiver(int view_id);
     static void unbindReceiver(const CCefEventsGate * receiver);
 
-signals:
+Q_SIGNALS:
     void coreEvent(void *);
     void aboutToQuit();
 
-public slots:
+public Q_SLOTS:
     void onCoreEvent(void *);
     void onDownloadSaveDialog(const std::wstring& name, uint id);
     void onQueueCloseWindow(const sWinTag&);
     void onFileChecked(const QString&, int, bool);
     void onEditorWidgetClosed();
 
-private slots:
+private Q_SLOTS:
     void onMainWindowClose();
 
 public:

@@ -13,7 +13,7 @@
 FROM core-base AS desktop-builder
     ARG PRODUCT_VERSION
     ARG BUILD_NUMBER
-    ARG CACHE_BUST=1
+    ARG CACHE_BUST=2
     ARG BUILD_ROOT
     ARG COMPANY_NAME
     ARG PRODUCT_NAME
@@ -26,6 +26,7 @@ FROM core-base AS desktop-builder
                     libatk1.0-dev \
                     libxkbcommon-x11-dev \
                     python3-venv \
+                    python3-pip \
                     bison \
                     libnotify-dev \
                     libcups2-dev \
@@ -76,6 +77,8 @@ FROM core-base AS desktop-builder
     ENV BUILD_NUMBER=${BUILD_NUMBER}
     
     ENV ABOUT_PAGE_APP_NAME="${COMPANY_NAME} ${PRODUCT_NAME}"
+    RUN pip3 install aqtinstall && \
+        aqt install-qt linux desktop 6.11.1 linux_gcc_64 -m qtmultimedia qtwebsockets qtwebchannel qtwaylandcompositor --outputdir /qt6
 
     RUN --mount=type=cache,target=/build-cache-desktop,id=build-cache-desktop-${CACHE_BUST} \
         --mount=type=cache,target=/nuget-cache,id=nuget-cache-${CACHE_BUST} \
