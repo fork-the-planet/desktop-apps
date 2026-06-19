@@ -88,6 +88,7 @@ FROM core-base AS desktop-builder
               -DVCPKG_MANIFEST_MODE=ON \
               -DVCPKG_MANIFEST_DIR="/core" \
               -DVCPKG_MANIFEST_FEATURES="desktop-editors" \
+              -DVCPKG_OVERLAY_PORTS="/core/Common/3dParty" \
               -DABOUT_PAGE_APP_NAME="${ABOUT_PAGE_APP_NAME}" \
               /desktop-apps/win-linux/ && \
         cmake --build . && \

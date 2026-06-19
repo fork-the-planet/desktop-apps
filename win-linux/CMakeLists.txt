@@ -34,7 +34,11 @@ execute_process(
 
 
 # 2. Find Qt Packages
-set(QT_ROOT "/qt6/6.11.1/gcc_64")
+if(DEFINED ENV{QT6_ROOT})
+    set(QT_ROOT "$ENV{QT6_ROOT}")
+else()
+    set(QT_ROOT "/qt6/6.11.1/gcc_64")
+endif()
 set(QT_DIR "${QT_ROOT}/lib/cmake/Qt6")
 set(Qt6_DIR "${QT_ROOT}/lib/cmake/Qt6")
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core Gui Widgets PrintSupport Svg)
@@ -42,7 +46,7 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Widgets PrintSup
 
 if(UNIX)
     find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS DBus)
-    add_definitions(-DLINUX -D_LINUX -D_WAYLAND -DQT_VERSION_6)
+    add_definitions(-DLINUX -D_LINUX -D_WAYLAND)
 endif()
 
 set(CEF_ROOT "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/cef")
