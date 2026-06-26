@@ -14,7 +14,7 @@ FROM core-base AS desktop-linux
 
     ARG PRODUCT_VERSION
     ARG BUILD_NUMBER
-    ARG CACHE_BUST=2
+    ARG CACHE_BUST=3
     ARG BUILD_ROOT
     ARG COMPANY_NAME
     ARG PRODUCT_NAME
@@ -85,13 +85,11 @@ FROM core-base AS desktop-linux
     RUN --mount=type=cache,target=/build-cache-desktop,id=build-cache-desktop-${CACHE_BUST} \
         --mount=type=cache,target=/nuget-cache,id=nuget-cache-${CACHE_BUST} \
         --mount=type=cache,target=/ccache,id=ccache \
-        --mount=type=bind,from=third-party,source=/third_party,target=/third_party_src \
         --mount=type=secret,id=nextcloud_user \
         --mount=type=secret,id=nextcloud_pass \
         export NEXTCLOUD_USER="$(cat /run/secrets/nextcloud_user)" && \
         export NEXTCLOUD_PASS="$(cat /run/secrets/nextcloud_pass)" && \
         export CCACHE_DIR=/ccache && \
-        cp -a /third_party_src/. /build-cache-desktop/third_party && \
         cd /build-cache-desktop && \
         cmake -GNinja \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
