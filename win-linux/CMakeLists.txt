@@ -350,16 +350,16 @@ target_include_directories(DesktopEditors PRIVATE
 )
 
 if(WIN32)
-    target_include_directories(DesktopEditors PRIVATE
-        ${Qt5PrintSupport_PRIVATE_INCLUDE_DIRS}
-        ${Qt5Core_PRIVATE_INCLUDE_DIRS}
-        ${Qt5Gui_PRIVATE_INCLUDE_DIRS})
+    target_link_libraries(DesktopEditors PRIVATE
+        Qt6::CorePrivate
+        Qt6::GuiPrivate
+        Qt6::PrintSupportPrivate)
 endif()
 
 target_link_directories(DesktopEditors PRIVATE
     $<$<CONFIG:Debug>:${CEF_ROOT}/Debug>
-    $<$<CONFIG:Release>:${CEF_ROOT}/Release>
-    ${ICU_DESKTOP_INSTALL_DIR}/include
+    $<$<NOT:$<CONFIG:Debug>>:${CEF_ROOT}/Release>
+    ${ICU_INSTALL_DIR}/include
 )
 
 target_link_libraries(DesktopEditors PRIVATE
@@ -406,16 +406,16 @@ endif()
 target_compile_definitions(DesktopEditors PRIVATE COMMON_OPENSSL_BUILDING_INTERNAL)
 
 if(WIN32)
-    target_compile_definitions(DesktopEditors PRIVATE UNICODE _UNICODE WIN32 _WINDOWS)
+    target_compile_definitions(DesktopEditors PRIVATE UNICODE _UNICODE WIN32 _WINDOWS _WIN32)
 endif()
 
 if(UNIX)
     target_link_libraries(DesktopEditors PRIVATE
         Qt${QT_VERSION_MAJOR}::DBus
         Qt${QT_VERSION_MAJOR}::X11Extras
-        ${LIBICUUC_DESKTOP}
-        ${LIBICUDATA_DESKTOP}
-        ${LIBICUI_DESKTOP}
+        ${LIBICUUC}
+        ${LIBICUDATA}
+        ${LIBICUI}
     )
 
     target_link_options(DesktopEditors PRIVATE "-Wl,-rpath,$ORIGIN" "-Wl,-rpath,$ORIGIN/converter")
@@ -482,12 +482,12 @@ install(DIRECTORY "${CEF_RESOURCES_PATH}/"
 
 # ICU runtime for the main app
 if(WIN32)
-    install(DIRECTORY "${ICU_DESKTOP_INSTALL_DIR_ABS}/lib/"
+    install(DIRECTORY "${ICU_INSTALL_DIR_ABS}/lib/"
         DESTINATION ${CMAKE_INSTALL_BINDIR}
         FILES_MATCHING PATTERN "icu*.dll"
     )
 else()
-    install(DIRECTORY "${ICU_DESKTOP_INSTALL_DIR_ABS}/lib/"
+    install(DIRECTORY "${ICU_INSTALL_DIR_ABS}/lib/"
         DESTINATION ${CMAKE_INSTALL_BINDIR}
         FILES_MATCHING PATTERN "lib*.so*"
     )
@@ -497,7 +497,7 @@ endif()
 if(WIN32)
     install(DIRECTORY "${QT_ROOT}/bin/"
         DESTINATION ${CMAKE_INSTALL_BINDIR}
-        FILES_MATCHING PATTERN "Qt5*.dll"
+        FILES_MATCHING PATTERN "Qt6*.dll"
     )
     install(DIRECTORY "${QT_ROOT}/plugins/"
         DESTINATION ${CMAKE_INSTALL_BINDIR}

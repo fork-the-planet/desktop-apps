@@ -68,7 +68,7 @@ struct sWinTag
 };
 
 Q_DECLARE_METATYPE(sWinTag)
-#if defined(_WIN32) && !defined(QT_VERSION_6)
+#if defined(_WIN32) && QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 Q_DECLARE_METATYPE(std::vector<std::wstring>)
 #endif
 
