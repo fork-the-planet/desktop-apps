@@ -14,7 +14,7 @@ FROM core-base AS desktop-linux
 
     ARG PRODUCT_VERSION
     ARG BUILD_NUMBER
-    ARG CACHE_BUST=1
+    ARG CACHE_BUST=3
     ARG BUILD_ROOT
     ARG COMPANY_NAME
     ARG PRODUCT_NAME
@@ -27,6 +27,7 @@ FROM core-base AS desktop-linux
                     libatk1.0-dev \
                     libxkbcommon-x11-dev \
                     python3-venv \
+                    python3-pip \
                     bison \
                     libnotify-dev \
                     libcups2-dev \
@@ -78,17 +79,17 @@ FROM core-base AS desktop-linux
     ENV BUILD_NUMBER=${BUILD_NUMBER}
     
     ENV ABOUT_PAGE_APP_NAME="${COMPANY_NAME} ${PRODUCT_NAME}"
+    RUN pip3 install aqtinstall && \
+        aqt install-qt linux desktop 6.11.1 linux_gcc_64 -m qtmultimedia qtwebsockets qtwebchannel qtwaylandcompositor --outputdir /qt6
 
     RUN --mount=type=cache,target=/build-cache-desktop,id=build-cache-desktop-${CACHE_BUST} \
         --mount=type=cache,target=/nuget-cache,id=nuget-cache-${CACHE_BUST} \
         --mount=type=cache,target=/ccache,id=ccache \
-        --mount=type=bind,from=third-party,source=/third_party,target=/third_party_src \
         --mount=type=secret,id=nextcloud_user \
         --mount=type=secret,id=nextcloud_pass \
         export NEXTCLOUD_USER="$(cat /run/secrets/nextcloud_user)" && \
         export NEXTCLOUD_PASS="$(cat /run/secrets/nextcloud_pass)" && \
         export CCACHE_DIR=/ccache && \
-        cp -a /third_party_src/. /build-cache-desktop/third_party && \
         cd /build-cache-desktop && \
         cmake -GNinja \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
@@ -96,6 +97,7 @@ FROM core-base AS desktop-linux
             -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake \
             -DVCPKG_MANIFEST_MODE=ON \
             -DVCPKG_MANIFEST_DIR="/core" \
+            -DVCPKG_MANIFEST_FEATURES="desktop-editors" \
             -DABOUT_PAGE_APP_NAME="${ABOUT_PAGE_APP_NAME}" \
             /desktop-apps/win-linux/ && \
         cmake --build . && \

@@ -21,6 +21,12 @@ set(BUILD_DESKTOP TRUE CACHE INTERNAL "tell common to prepare third party for de
 include(${CORE_ROOT_DIR}/common.cmake)
 
 
+# 2. Find Qt Packages
+if(UNIX)
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS DBus)
+    add_definitions(-DLINUX -D_LINUX -D_WAYLAND)
+endif()
+
 if(NOT TARGET hunspell-wrapper)
     add_subdirectory(${CORE_ROOT_DIR}/Common/3dParty/hunspell/qt hunspell-wrapper)
 endif()
@@ -107,11 +113,6 @@ endif()
 
 if(NOT TARGET allthemesgen)
     add_subdirectory( "${CORE_ROOT_DIR}/DesktopEditor/allthemesgen" allthemesgen )
-endif()
-
-if(UNIX)
-    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS DBus X11Extras)
-    add_definitions(-DLINUX -D_LINUX -D_X11)
 endif()
 
 # 3. Definitions & Global Config
@@ -267,7 +268,7 @@ elseif(UNIX AND NOT APPLE)
     # Linux Resource Compiler (GResource)
 
     list(APPEND COMMON_SOURCES 
-        src/windows/platform_linux/cx11decoration.cpp
+        src/windows/platform_linux/cplatformdecoration.cpp
         src/windows/platform_linux/cwindowplatform.cpp
         src/components/cnotification.cpp
         src/platform_linux/cdialogopenssl.cpp
@@ -277,11 +278,11 @@ elseif(UNIX AND NOT APPLE)
         src/platform_linux/gtkfilechooser.cpp
         src/platform_linux/gtkprintdialog.cpp
         src/platform_linux/gtkutils.cpp
-        src/platform_linux/xcbutils.cpp
+        src/platform_linux/linux_window_utils.cpp
         extras/update-daemon/src/classes/csocket.cpp
     )
     list(APPEND COMMON_HEADERS 
-        src/windows/platform_linux/cx11decoration.h
+        src/windows/platform_linux/cplatformdecoration.h
         #src/windows/platform_linux/gtk_addon.h
         src/windows/platform_linux/cwindowplatform.h
         src/components/cnotification.h
@@ -292,7 +293,7 @@ elseif(UNIX AND NOT APPLE)
         src/platform_linux/gtkfilechooser.h
         src/platform_linux/gtkprintdialog.h
         src/platform_linux/gtkutils.h
-        src/platform_linux/xcbutils.h
+        src/platform_linux/linux_window_utils.h
         extras/update-daemon/src/classes/csocket.h
     )
 
@@ -313,9 +314,9 @@ elseif(UNIX AND NOT APPLE)
 endif()
 
 # 7. Create Executable
-qt5_add_resources(RESOURCES resources.qrc)
+qt6_add_resources(RESOURCES resources.qrc)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extras.qrc")
-    qt5_add_resources(RESOURCES extras.qrc)
+    qt6_add_resources(RESOURCES extras.qrc)
 endif()
 
 add_executable(DesktopEditors ${COMMON_SOURCES} ${COMMON_HEADERS} ${RESOURCES})
@@ -344,16 +345,16 @@ target_include_directories(DesktopEditors PRIVATE
 )
 
 if(WIN32)
-    target_include_directories(DesktopEditors PRIVATE
-        ${Qt5PrintSupport_PRIVATE_INCLUDE_DIRS}
-        ${Qt5Core_PRIVATE_INCLUDE_DIRS}
-        ${Qt5Gui_PRIVATE_INCLUDE_DIRS})
+    target_link_libraries(DesktopEditors PRIVATE
+        Qt6::CorePrivate
+        Qt6::GuiPrivate
+        Qt6::PrintSupportPrivate)
 endif()
 
 target_link_directories(DesktopEditors PRIVATE
     $<$<CONFIG:Debug>:${CEF_ROOT}/Debug>
-    $<$<CONFIG:Release>:${CEF_ROOT}/Release>
-    ${ICU_DESKTOP_INSTALL_DIR}/include
+    $<$<NOT:$<CONFIG:Debug>>:${CEF_ROOT}/Release>
+    ${ICU_INSTALL_DIR}/include
 )
 
 target_link_libraries(DesktopEditors PRIVATE
@@ -400,16 +401,15 @@ endif()
 target_compile_definitions(DesktopEditors PRIVATE COMMON_OPENSSL_BUILDING_INTERNAL)
 
 if(WIN32)
-    target_compile_definitions(DesktopEditors PRIVATE UNICODE _UNICODE WIN32 _WINDOWS)
+    target_compile_definitions(DesktopEditors PRIVATE UNICODE _UNICODE WIN32 _WINDOWS _WIN32)
 endif()
 
 if(UNIX)
     target_link_libraries(DesktopEditors PRIVATE
         Qt${QT_VERSION_MAJOR}::DBus
-        Qt${QT_VERSION_MAJOR}::X11Extras
-        ${LIBICUUC_DESKTOP}
-        ${LIBICUDATA_DESKTOP}
-        ${LIBICUI_DESKTOP}
+        ${LIBICUUC}
+        ${LIBICUDATA}
+        ${LIBICUI}
     )
 
     target_link_options(DesktopEditors PRIVATE "-Wl,-rpath,$ORIGIN" "-Wl,-rpath,$ORIGIN/converter")
@@ -430,7 +430,7 @@ endif()
 
 # 10. Translations
 file(GLOB TS_FILES "langs/*.ts")
-qt5_create_translation(DesktopEditors TS_FILES ${TS_FILES})
+qt6_add_translation(DesktopEditors TS_FILES ${TS_FILES})
 
 # 1. Explicitly set CEF Path
 set(CEF_LIB_PATH "${CEF_ROOT}/Release")
@@ -476,12 +476,12 @@ install(DIRECTORY "${CEF_RESOURCES_PATH}/"
 
 # ICU runtime for the main app
 if(WIN32)
-    install(DIRECTORY "${ICU_DESKTOP_INSTALL_DIR_ABS}/lib/"
+    install(DIRECTORY "${ICU_INSTALL_DIR_ABS}/lib/"
         DESTINATION ${CMAKE_INSTALL_BINDIR}
         FILES_MATCHING PATTERN "icu*.dll"
     )
 else()
-    install(DIRECTORY "${ICU_DESKTOP_INSTALL_DIR_ABS}/lib/"
+    install(DIRECTORY "${ICU_INSTALL_DIR_ABS}/lib/"
         DESTINATION ${CMAKE_INSTALL_BINDIR}
         FILES_MATCHING PATTERN "lib*.so*"
     )
@@ -491,7 +491,7 @@ endif()
 if(WIN32)
     install(DIRECTORY "${QT_ROOT}/bin/"
         DESTINATION ${CMAKE_INSTALL_BINDIR}
-        FILES_MATCHING PATTERN "Qt5*.dll"
+        FILES_MATCHING PATTERN "Qt6*.dll"
     )
     install(DIRECTORY "${QT_ROOT}/plugins/"
         DESTINATION ${CMAKE_INSTALL_BINDIR}

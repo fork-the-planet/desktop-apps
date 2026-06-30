@@ -19,7 +19,7 @@
 */
 
 #mainPanel {margin: 0; padding: 0; background: %1;}
-#CX11Caption {min-width: 200px; background: %1;}
+#CPlatformCaption {min-width: 200px; background: %1;}
 #labelAppTitle {color: %2; background: transparent; margin-top: -2px; font-size: 11px;}
 
 QPushButton {/*background-color:#d9d9d9;*/ padding:0 20px; font-weight: normal; height: 22px; font-size: 12px;}

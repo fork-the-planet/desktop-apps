@@ -65,7 +65,7 @@ int main( int argc, char *argv[] )
         return 0;
     }
 #endif
-#ifdef QT_VERSION_6
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     qputenv("QT_ENABLE_HIGHDPI_SCALING", "0");
 #else
     QCoreApplication::setAttribute(Qt::AA_DisableHighDpiScaling);
@@ -159,7 +159,9 @@ int main( int argc, char *argv[] )
         return 0;
     }
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     app.setAttribute(Qt::AA_UseHighDpiPixmaps);
+#endif
     app.setStyle(QStyleFactory::create("Fusion"));
 
     /* the order is important */

@@ -1,4 +1,4 @@
-#CX11Caption {min-width: 350px;}
+#CPlatformCaption {min-width: 350px;}
 #labelAppTitle {margin-top: -4px; font-size: 22px;}
 
 QPushButton {border-width: 2px; padding:0 40px; height: 44px; border-radius:4px; font-size: 22px;}
